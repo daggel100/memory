@@ -1,5 +1,7 @@
-// Hier sollen die Karten aus src/assets/img geladen und angezeigt werden
-
+// kartenaufruf.jsx (einfach erklärt)
+// - Hier werden die Bilddateien importiert und in einem Array `kartenArray`
+//   gesammelt. Jede Karte ist ein Objekt mit `id`, `name` und `img`.
+// - Dieses Array ist die Quelle für das Memory-Spiel.
 // Karten aus Ordner holen
 // import React from 'react'
 import Apfel from '../assets/img/apfel.png'

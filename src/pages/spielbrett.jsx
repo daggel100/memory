@@ -65,6 +65,11 @@ import kartenArray from '../constanten/kartenaufruf.jsx'
 import Rueckseite from '../assets/img/verdeckt.png'
 // Das Mischen wird später importiert und verwendet
 import {mischen} from '../funktionen/mischen.jsx'
+// Hooks: kleine, wiederverwendbare Funktionen, die React-Zustand und Logik kapseln.
+// Wir importieren drei Hooks, die zusammen die Spiellogik steuern:
+// - useAufgedeckteKarten: verwaltet welche Karten aktuell aufgedeckt sind
+// - useVergleicheKarten: liefert eine Funktion, die prüft, ob zwei aufgedeckte Karten ein Paar sind
+// - useUmdrehenMitDelay: sorgt dafür, dass nichtübereinstimmende Karten nach kurzer Zeit wieder verdeckt werden
 import { useAufgedeckteKarten } from '../hooks-useGameLogic/useAufgedeckteKarte.jsx'
 import { useVergleicheKarten } from '../hooks-useGameLogic/useVergleicheKarte.jsx'
 import { useUmdrehenMitDelay } from '../hooks-useGameLogic/useUmdrehenMitDelay.jsx' 
@@ -72,10 +77,26 @@ import { useUmdrehenMitDelay } from '../hooks-useGameLogic/useUmdrehenMitDelay.j
 const doppelteKarten = mischen ([...kartenArray, ...kartenArray])
 
 function Spielbrett() {
+  // Hier rufen wir die Hooks *auf* und lesen deren Rückgaben aus:
+  // useAufgedeckteKarten() -> liefert { aufgedeckt, karteUmdrehen, reset }
+  // - aufgedeckt: Array mit Indizes der aktuell offenen Karten
+  // - karteUmdrehen(index): Funktion, die beim Klick eine Karte öffnet
+  // - reset(): Funktion, um die offenen Karten wieder zu schließen
   const { aufgedeckt, karteUmdrehen, reset } = useAufgedeckteKarten()
+
+  // useVergleicheKarten() -> liefert { istPaar }
+  // - istPaar(karten, aufgedeckt) ist eine Funktion, die true zurückgibt,
+  //   wenn die beiden aufgedeckten Karten dasselbe Motiv haben.
   const { istPaar } = useVergleicheKarten()
-  // istPaar muss mit den aktuellen Karten und aufgedeckt aufgerufen werden
+
+  // Wir rufen die Vergleichsfunktion mit den aktuellen Kartendaten und
+  // dem aktuellen `aufgedeckt`-Array auf — das Ergebnis ist ein Boolean.
   const istPaarErgebnis = istPaar(doppelteKarten, aufgedeckt)
+
+  // useUmdrehenMitDelay(aufgedeckt, reset, istPaarErgebnis)
+  // - Dieser Hook beobachtet das `aufgedeckt`-Array. Wenn zwei Karten offen
+  //   sind und `istPaarErgebnis` false ist, startet er einen Timer und ruft
+  //   nach 1 Sekunde `reset()` auf, damit die Karten wieder verdeckt werden.
   useUmdrehenMitDelay(aufgedeckt, reset, istPaarErgebnis)
 
   return (
@@ -85,10 +106,17 @@ function Spielbrett() {
         {doppelteKarten.map((karte, index) => (
           <img
             key={index}
-            // Damit die Karte umgedreht wird, wenn sie in aufgedeckt ist
+            // src: zeigt das Motiv, wenn die Karte im `aufgedeckt`-Array ist,
+            // sonst zeigen wir die Rückseite (verdeckt.png).
+            // So sieht der Spieler zuerst nur die Rückseiten und kann
+            // durch Klicken die Karte umdrehen.
             src={aufgedeckt.includes(index) ? karte.img : Rueckseite}
             alt={karte.name}
             style={{ width: '80px', height: '80px', margin: '5px' }}
+            // onClick: ruft die Funktion aus dem Hook `useAufgedeckteKarten`
+            // auf. Diese Funktion fügt den Index in das `aufgedeckt`-Array ein
+            // (aber nur, wenn weniger als zwei Karten bereits offen sind).
+            // Dadurch wird die Karte sichtbar (siehe src oben).
             onClick={() => karteUmdrehen(index)}
           />
         ))}

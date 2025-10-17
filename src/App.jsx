@@ -1,3 +1,7 @@
+// App.jsx (einfach erklärt)
+// - Diese Komponente definiert die Haupt-Routen der Anwendung.
+// - Für '/' (Start) zeigen wir die LandingPage, für '/spielbrett' das Spielbrett.
+// - Die eigentliche Darstellung und Logik sind in den einzelnen Seiten-Komponenten.
 // import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Spielbrett from './pages/spielbrett'
