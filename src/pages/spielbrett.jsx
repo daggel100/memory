@@ -62,12 +62,22 @@
 
 import React from 'react'
 import kartenArray from '../constanten/kartenaufruf.jsx'
+import Rueckseite from '../assets/img/verdeckt.png'
 // Das Mischen wird später importiert und verwendet
 import {mischen} from '../funktionen/mischen.jsx'
+import { useAufgedeckteKarten } from '../hooks-useGameLogic/useAufgedeckteKarte.jsx'
+import { useVergleicheKarten } from '../hooks-useGameLogic/useVergleicheKarte.jsx'
+import { useUmdrehenMitDelay } from '../hooks-useGameLogic/useUmdrehenMitDelay.jsx' 
 
 const doppelteKarten = mischen ([...kartenArray, ...kartenArray])
 
 function Spielbrett() {
+  const { aufgedeckt, karteUmdrehen, reset } = useAufgedeckteKarten()
+  const { istPaar } = useVergleicheKarten()
+  // istPaar muss mit den aktuellen Karten und aufgedeckt aufgerufen werden
+  const istPaarErgebnis = istPaar(doppelteKarten, aufgedeckt)
+  useUmdrehenMitDelay(aufgedeckt, reset, istPaarErgebnis)
+
   return (
     <div>
       <h1>Memory Spiel</h1>
@@ -75,9 +85,11 @@ function Spielbrett() {
         {doppelteKarten.map((karte, index) => (
           <img
             key={index}
-            src={karte.img}
+            // Damit die Karte umgedreht wird, wenn sie in aufgedeckt ist
+            src={aufgedeckt.includes(index) ? karte.img : Rueckseite}
             alt={karte.name}
             style={{ width: '80px', height: '80px', margin: '5px' }}
+            onClick={() => karteUmdrehen(index)}
           />
         ))}
       </div>
