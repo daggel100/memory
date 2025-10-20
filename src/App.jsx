@@ -6,6 +6,8 @@
 import { Routes, Route } from 'react-router-dom'
 import Spielbrett from './pages/spielbrett'
 import LandingPage from './pages/LandingPage'
+import GameOver from './pages/GameOver'
+import HighScores from './pages/HighScores'
 
 import './App.css'
 
@@ -15,7 +17,9 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/spielbrett" element={<Spielbrett />} />
+  <Route path="/spielbrett" element={<Spielbrett />} />
+  <Route path="/gameover" element={<GameOver />} />
+  <Route path="/highscores" element={<HighScores />} />
     </Routes>
   )
 }

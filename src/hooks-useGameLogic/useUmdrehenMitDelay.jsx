@@ -22,15 +22,28 @@ import { useEffect } from 'react'
     Falls sich die Abhängigkeiten ändern oder die Komponente verschwindet,
     wird der Timer abgebrochen (cleanup).
 */
-export function useUmdrehenMitDelay(aufgedeckt, reset, istPaar) {
+export function useUmdrehenMitDelay(aufgedeckt, reset, istPaar, onMatch, onNoMatch, delay = 1000) {
   useEffect(() => {
-    if (aufgedeckt.length === 2 && !istPaar) {
-      const timer = setTimeout(() => {
+    // Nur handeln, wenn genau zwei Karten aufgedeckt sind
+    if (aufgedeckt.length !== 2) return
+
+    // Wenn es ein Paar ist, rufe onMatch auf (falls vorhanden)
+    // und setze das Spiel danach zurück.
+    if (istPaar) {
+      const t = setTimeout(() => {
+        onMatch && onMatch(aufgedeckt)
         reset()
-      }, 1000) // 1 Sekunde
-      return () => clearTimeout(timer)
+      }, delay)
+      return () => clearTimeout(t)
     }
-  }, [aufgedeckt, istPaar, reset])
+
+    // Kein Paar: rufe onNoMatch (falls vorhanden) und setze danach zurück
+    const t = setTimeout(() => {
+      onNoMatch && onNoMatch(aufgedeckt)
+      reset()
+    }, delay)
+    return () => clearTimeout(t)
+  }, [aufgedeckt, istPaar, reset, onMatch, onNoMatch, delay])
 }
 
 // Der Hook überwacht das "aufgedeckt"-Array und wenn zwei Karten aufgedeckt,

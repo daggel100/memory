@@ -40,3 +40,152 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Spiel-spezifische Styles */
+.karten-container {
+  display: grid;
+  /* Responsive Grid: auto-fit sorgt dafür, dass Spalten umgebrochen werden
+     und das Grid nach unten wächst, statt horizontal zu scrollen. */
+  /* feste 80px-Spalten: so entstehen so viele Spalten wie platz haben
+     und die Karten behalten ihre Größe; das Grid wächst nach unten. */
+  grid-template-columns: repeat(auto-fill, 80px);
+  justify-content: start; /* zentriert das Grid innerhalb des Containers */
+  gap: 12px;
+  margin: 1.5rem 0; /* removed auto to allow full width */
+  width: 100%; /* ensure full width usage */
+  max-width: none; /* erlaube volle Nutzung der parent width (board-center) */
+}
+
+.karten-container img {
+  display: block; /* saubere Grid-Items */
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.spieler-stapel-container {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 20px;
+}
+
+/* Layout für das Spiel: Spieler links, Board mitte, Spieler rechts */
+ .spiel-layout {
+  display: grid;
+  /* Standard: Spieler-Spalten kleiner, Board hat mehr Platz */
+  grid-template-columns: 240px 1fr 240px;
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+ }
+
+ .players-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 240px; /* Standardbreite wiederhergestellt */
+  box-sizing: border-box;
+  padding: 0 12px; /* etwas Innenabstand */
+}
+.players-fixed-left {
+  position: fixed;
+  left: 0;
+  top: 120px;
+  width: 240px;
+  z-index: 50;
+}
+.players-fixed-right {
+  position: fixed;
+  right: 0;
+  top: 120px;
+  width: 240px;
+  z-index: 50;
+}
+
+/* Der Board-Container wird explizit in die Lücke zwischen den fixen
+   Player-Spalten gelegt. calc(100% - 240px - 240px) stellt sicher, dass
+   es keinen horizontalen Scroll und keine Überlappung gibt. */
+.board-center {
+  /* Verwende die Viewportbreite, damit die Mitte immer genau den Abstand
+     zwischen den fixierten Player-Spalten einnimmt (240px links + 240px rechts).
+     So kollabiert die Mitte nicht, wenn das Grid innerhalb eines kleineren
+     Elternelements liegt. */
+  width: calc(100vw - 480px);
+  max-width: calc(1200px - 480px); /* schützt vor zu großer Breite auf breiten Bildschirmen */
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.spieler-stapel {
+  display: flex;
+  flex-direction: column; /* Stapel untereinander */
+  align-items: center;
+  gap: 6px;
+}
+
+/* Aktiver Spieler: grüne Umrandung und leichter Glow */
+.spieler-stapel.active-player {
+  border: 2px solid #7CFC00;
+  box-shadow: 0 0 12px rgba(124,252,0,0.25);
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.spieler-stapel h4 {
+  margin: 0 0 6px 0;
+}
+
+.spieler-found-images {
+  display: flex;
+  flex-direction: row; /* Zeilenweise: nebeneinander, dann umbrechen */
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Zeitwarnung: pulsierender Effekt für die letzten Sekunden */
+.time-warning {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(220,20,60,0.9), rgba(255,99,71,0.9));
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1 }
+  50% { transform: scale(1.06); opacity: 0.85 }
+  100% { transform: scale(1); opacity: 1 }
+}
+
+@media (max-width: 900px) {
+  .spiel-layout {
+    grid-template-columns: 1fr; /* mobile: alles untereinander */
+    padding: 0 1rem;
+  }
+  .players-column { flex-direction: row; gap: 12px; }
+  .spieler-stapel { flex-direction: row; }
+  .spieler-found-images { flex-direction: row; flex-wrap: wrap; }
+
+  /* mobile: revert fixed players to flow so nothing overlays */
+  .players-fixed-left, .players-fixed-right {
+    position: static;
+    width: auto;
+    top: auto;
+  }
+  .board-center { width: auto; margin: 0; }
+}
+
+/* Positioniere die linke und rechte Spieler-Spalte an den äußeren Rändern
+   der Spiel-Layout-Box. Dadurch rücken die Spieler optisch mehr nach außen.
+   Wir nutzen :first-child und :last-child, damit die JSX-Struktur unverändert
+   bleiben kann (beide Spalten haben weiterhin die Klasse `players-column`). */
+.spiel-layout > .players-column:first-child {
+  align-items: flex-start; /* linker Rand */
+}
+.spiel-layout > .players-column:last-child {
+  align-items: flex-end; /* rechter Rand */
+}
