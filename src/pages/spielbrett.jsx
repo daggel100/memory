@@ -190,21 +190,73 @@ function Spielbrett({ anzahlSpieler = 2, playerNames = [], anzahlPaare, mode = '
   // Computerzug auslösen, wenn activePlayer ist Computer
   React.useEffect(() => {
     if (!isComputerMode) return
-    // finde index des Computer-Spielers (angenommen letzter Spieler ist Computer)
-    const compIndex = playerNames.findIndex(n => n === 'Computer')
+    // finde index des Computer-Spielers
+    // - bevorzugt Namen, die exakt 'Computer' sind oder 'computer' enthalten (case-insensitive)
+    // - falls kein solcher Name gesetzt ist, nehmen wir standardmäßig den letzten Spieler (anzahlSpieler-1)
+    const namedComp = playerNames.findIndex(n => typeof n === 'string' && (n === 'Computer' || n.toLowerCase().includes('computer')))
+    const compIndex = namedComp !== -1 ? namedComp : (typeof anzahlSpieler === 'number' && anzahlSpieler > 0 ? anzahlSpieler - 1 : -1)
     if (compIndex === -1) return
     if (activePlayer !== compIndex) return
-    // warte kurz, dann wähle zwei zufällige Karten
+    // Build a memory of seen cards and prefer pairs when possible.
+    // seenRef maps motif (pairKey) -> array of indices where we saw it
     const timeout = setTimeout(() => {
       const available = deck.map((c, i) => (c ? i : -1)).filter(i => i >= 0)
       if (available.length < 2) return
-      // Zufällige Auswahl (keine Intelligenz) — kann später verbessert werden
-      const shuffled = available.sort(() => Math.random() - 0.5)
-      const pick = shuffled.slice(0, 2)
-      pick.forEach(idx => karteUmdrehen(idx))
+
+      // Helper: find indices still available (not null)
+      const alive = new Set(available)
+
+      // Build seen map from previous observations
+      const seenMap = new Map()
+      // Scan deck for any known cards that are not removed
+      deck.forEach((c, i) => {
+        if (c && c.pairKey) {
+          if (!seenMap.has(c.pairKey)) seenMap.set(c.pairKey, [])
+          seenMap.get(c.pairKey).push(i)
+        }
+      })
+
+      // 1) Find a motif with two available indices -> pick that pair
+      for (const [key, indices] of seenMap.entries()) {
+        const avail = indices.filter(i => alive.has(i))
+        if (avail.length >= 2) {
+          const [a, b] = avail.slice(0, 2)
+          // Versuche zuerst, Karte A zu öffnen. Wenn das klappt, schedule B.
+          if (karteUmdrehen(a)) {
+            setTimeout(() => { karteUmdrehen(b) }, computerDifficultyDelay + 120)
+          }
+          return
+        }
+      }
+
+      // 2) Find a motif with one known index -> try to pick it first then a random
+      for (const [key, indices] of seenMap.entries()) {
+        const avail = indices.filter(i => alive.has(i))
+        if (avail.length === 1) {
+          const a = avail[0]
+          // pick a random other index not equal to a
+          const others = available.filter(i => i !== a)
+          if (others.length === 0) return
+          const b = others[Math.floor(Math.random() * others.length)]
+          if (karteUmdrehen(a)) {
+            setTimeout(() => { karteUmdrehen(b) }, computerDifficultyDelay + 120)
+          }
+          return
+        }
+      }
+
+      // 3) Pure random fallback: pick two different indices
+      const shuffled = available.slice().sort(() => Math.random() - 0.5)
+      const pickA = shuffled[0]
+      const pickB = shuffled.find(i => i !== pickA) || shuffled[1]
+      if (typeof pickA !== 'undefined' && typeof pickB !== 'undefined') {
+        if (karteUmdrehen(pickA)) {
+          setTimeout(() => { karteUmdrehen(pickB) }, computerDifficultyDelay + 120)
+        }
+      }
     }, computerDifficultyDelay)
     return () => clearTimeout(timeout)
-  }, [activePlayer, deck, isComputerMode, playerNames, karteUmdrehen, computerDifficultyDelay])
+  }, [activePlayer, deck, isComputerMode, playerNames, karteUmdrehen, computerDifficultyDelay, anzahlSpieler])
   // Teile die Spielstände in linke (ungerade) und rechte (gerade) Spalten auf.
   // Wir nummerieren Spieler 1..N (idx + 1). Spieler mit (idx+1)%2 === 1 sind ungerade.
   const leftPlayers = spielstaende.map((sp, idx) => ({ sp, idx })).filter(({ idx }) => idx % 2 === 0)

@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 /*
   useAufgedeckteKarten (einfach erklärt)
@@ -20,11 +20,25 @@ import { useState } from 'react'
 */
 export function useAufgedeckteKarten() {
   const [aufgedeckt, setAufgedeckt] = useState([])
+  // Ref, damit zeitverzögerte Aufrufe (z.B. setTimeout in der KI) die
+  // aktuelle Anzahl an aufgedeckten Karten sehen können.
+  const aufgedecktRef = useRef(aufgedeckt)
+  useEffect(() => { aufgedecktRef.current = aufgedeckt }, [aufgedeckt])
 
+  // Gibt true zurück, wenn das Umdrehen erfolgreich war, sonst false.
   function karteUmdrehen(index) {
-    if (aufgedeckt.length < 2 && !aufgedeckt.includes(index)) {
-      setAufgedeckt([...aufgedeckt, index])
+    // Nutze das Ref, um den aktuellsten Wert auch innerhalb von Zeitverzögerungen zu prüfen.
+    const current = aufgedecktRef.current
+    if (current.length < 2 && !current.includes(index)) {
+      setAufgedeckt(prev => {
+        const next = [...prev, index]
+        // Sofort im Ref aktualisieren, damit parallel laufende Timer das sehen
+        aufgedecktRef.current = next
+        return next
+      })
+      return true
     }
+    return false
   }
 
   function reset() {
